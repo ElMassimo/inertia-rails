@@ -1,7 +1,7 @@
 RSpec.describe 'rendering inertia views', type: :request do
   subject { response.body }
 
-  let(:controller) { double('Controller', inertia_view_assigns: {})}
+  let(:controller) { ApplicationController.new.tap { |controller| controller.set_request!(request) } }
 
   context 'first load' do
     let(:page) { InertiaRails::Renderer.new('TestComponent', controller, request, response, '').send(:page) }
@@ -49,7 +49,7 @@ RSpec.describe 'rendering inertia views', type: :request do
 
     it 'has the proper headers' do
       expect(response.headers['X-Inertia']).to eq 'true'
-      expect(response.headers['Vary']).to eq 'Accept'
+      expect(response.headers['Vary']).to eq 'X-Inertia'
       expect(response.headers['Content-Type']).to eq 'application/json; charset=utf-8'
     end
 
