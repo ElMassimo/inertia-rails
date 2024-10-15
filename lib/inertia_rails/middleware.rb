@@ -5,10 +5,7 @@ module InertiaRails
     end
 
     def call(env)
-      InertiaRailsRequest.new(@app, env)
-                         .response
-    ensure
-      ::InertiaRails.reset!
+      InertiaRailsRequest.new(@app, env).response
     end
 
     class InertiaRailsRequest
@@ -22,7 +19,7 @@ module InertiaRails
         status, headers, body = @app.call(@env)
         request = ActionDispatch::Request.new(@env)
 
-        # Inertia errors are added to the session via redirect_to 
+        # Inertia errors are added to the session via redirect_to
         request.session.delete(:inertia_errors) unless keep_inertia_errors?(status)
 
         status = 303 if inertia_non_post_redirect?(status)
@@ -60,11 +57,15 @@ module InertiaRails
         request_method == 'GET'
       end
 
+      def controller
+        @env["action_controller.instance"]
+      end
+
       def request_method
         @env['REQUEST_METHOD']
       end
 
-      def inertia_version
+      def client_version
         @env['HTTP_X_INERTIA_VERSION']
       end
 
@@ -73,17 +74,15 @@ module InertiaRails
       end
 
       def version_stale?
-        sent_version != saved_version
+        coerce_version(client_version) != coerce_version(server_version)
       end
 
-      def sent_version
-        return nil if inertia_version.nil?
-
-        InertiaRails.version.is_a?(Numeric) ? inertia_version.to_f : inertia_version
+      def server_version
+        controller.send(:inertia_configuration).version
       end
 
-      def saved_version
-        InertiaRails.version.is_a?(Numeric) ? InertiaRails.version.to_f : InertiaRails.version
+      def coerce_version(version)
+        server_version.is_a?(Numeric) ? version.to_f : version
       end
 
       def force_refresh(request)
@@ -97,4 +96,3 @@ module InertiaRails
     end
   end
 end
-

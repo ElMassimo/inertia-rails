@@ -1,7 +1,8 @@
+require 'net/http'
+
 RSpec.describe 'inertia ssr', type: :request do
   context 'ssr is enabled' do
     before do
-      InertiaRails.reset!
       InertiaRails.configure do |config|
         config.ssr_enabled = true
         config.ssr_url = 'ssr-url'
@@ -41,7 +42,7 @@ RSpec.describe 'inertia ssr', type: :request do
       it 'allows inertia to take over when inertia headers are passed' do
         get props_path, headers: {'X-Inertia' => true, 'X-Inertia-Version' => '1.0'}
 
-        expect(response.headers['Vary']).to eq 'Accept'
+        expect(response.headers['Vary']).to eq 'X-Inertia'
         expect(response.headers['Content-Type']).to eq 'application/json; charset=utf-8'
       end
     end
